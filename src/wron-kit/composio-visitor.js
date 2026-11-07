@@ -140,7 +140,7 @@ function DefaultSignIn({ toolkitSlug }) {
     createElement("p", null, mode === "signup" ? "Create an account to connect yours." : "Sign in to connect your account."),
     mode === "signup" && createElement("input", { value: name, onChange: e => setName(e.target.value), placeholder: "Name", "aria-label": "Name", autoComplete: "name" }),
     createElement("input", { value: email, onChange: e => setEmail(e.target.value), placeholder: "Email", type: "email", required: true, "aria-label": "Email", autoComplete: "email" }),
-    createElement("input", { value: password, onChange: e => setPassword(e.target.value), placeholder: "Password", type: "password", required: true, "aria-label": "Password", autoComplete: mode === "signup" ? "new-password" : "WRON_SECRET_REMOVED" }),
+    createElement("input", { value: password, onChange: e => setPassword(e.target.value), placeholder: "Password", type: "password", required: true, "aria-label": "Password", autoComplete: mode === "signup" ? "new-password" : "current-password" }),
     mode === "signup" && createElement("input", { value: inviteCode, onChange: e => setInviteCode(e.target.value), placeholder: "Invite code, if required", "aria-label": "Invite code" }),
     createElement("button", { type: "submit", disabled: busy }, busy ? "Please wait…" : mode === "signup" ? "Create account and connect" : "Sign in and connect"),
     createElement("button", { type: "button", onClick: () => setMode(mode === "signup" ? "signin" : "signup") }, mode === "signup" ? "Already have an account? Sign in" : "New here? Create an account"),

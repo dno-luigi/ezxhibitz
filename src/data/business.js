@@ -78,7 +78,7 @@ export const COPY = {
   removed: "Item removed",
   undo: "Undo",
   errUnsupported: "This file type is not supported. Add a PDF, image or Word file.",
-  errPassword: "WRON_SECRET_REMOVED",
+  errPassword: "This file is password protected. Remove its password and add it again.",
   errUnreadable: "This file could not be read. The rest of your packet is unchanged.",
   errPreview: "Preview is unavailable. Your work is kept. Retry.",
   errExport: "Export is unavailable. Your work is kept. Retry.",
