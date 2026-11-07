@@ -18,7 +18,7 @@ jobs:
       - name: Extract ZIP
         run: |
           mkdir -p extracted
-          unzip -o "filename.zip" -d extracted/
+          unzip -o "ezxhibitz.zip" -d extracted/
 
       - name: Commit extracted files
         run: |
