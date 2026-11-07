@@ -4,6 +4,15 @@ import path from "node:path";
 
 export default defineConfig({
   plugins: [react()],
+  server: {
+    // `npm run dev` serves the app; `npm run api` serves its backend (worker/) on
+    // 8787. In production both are the same origin, so the dev server forwards
+    // the same paths there.
+    proxy: {
+      "/api": "http://127.0.0.1:8787",
+      "/f": "http://127.0.0.1:8787",
+    },
+  },
   resolve: {
     // Exact matches: a plain "@wron/kit" key would also catch "@wron/kit/3d" as a path inside index.jsx.
     alias: [

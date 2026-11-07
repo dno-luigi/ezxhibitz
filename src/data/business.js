@@ -14,12 +14,10 @@ export const BUSINESS = {
 };
 
 // The owner's own Cash App QR code, shown unchanged in the "Buy 20 packets" window.
-export const CASH_APP_QR =
-  "https://firebasestorage.googleapis.com/v0/b/wron-ai.firebasestorage.app/o/site-library%2FdvqIQH6dxgSVb1U9QpTyOyNjH093%2Fsite-1793834947009%2Fupload-ab60dbab-2377-4438-84f5-d05799976cfb.png?alt=media&token=74306c15-a9c3-4d8d-831f-d6cbd6ac80ed";
+export const CASH_APP_QR = "/img/cash-app-qr.png";
 
 // Generated still of the settled paper stack (share picture / 3D poster).
-export const HERO_STILL =
-  "https://firebasestorage.googleapis.com/v0/b/wron-ai.firebasestorage.app/o/site-assets%2Fsite-1793834947009%2Fb67bac5f-a293-44b9-86f8-f143ee50a8db.webp?alt=media&token=17743003-4b27-4492-bbc7-5dc9ba13ffdc";
+export const HERO_STILL = "/img/hero-still.webp";
 
 // Section ids on the home page (header links point here).
 export const SECTIONS = {

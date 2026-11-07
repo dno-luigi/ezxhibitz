@@ -1,0 +1,26 @@
+// Local development: `npm run api`.
+//
+// Same Worker and assets as wrangler.jsonc, with a local D1 database and a local
+// R2 bucket, so forms, share links and uploads can be exercised without touching
+// the account. Wrangler keeps that state in .wrangler/ (ignored by git).
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "ezxhibitz",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-11-07",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/f/*"]
+  },
+  "rules": [{ "type": "Text", "globs": ["**/*.sql"], "fallthrough": true }],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "ezxhibitz",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "r2_buckets": [{ "binding": "FILES", "bucket_name": "ezxhibitz-files" }]
+}
