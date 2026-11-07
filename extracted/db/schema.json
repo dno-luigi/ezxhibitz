@@ -1,0 +1,15 @@
+{
+  "tables": [
+    {
+      "name": "share_links",
+      "access": "submit",
+      "columns": [
+        { "name": "url", "type": "text" },
+        { "name": "file_name", "type": "text" },
+        { "name": "page_count", "type": "integer" },
+        { "name": "action", "type": "text" },
+        { "name": "remove_by", "type": "date" }
+      ]
+    }
+  ]
+}
