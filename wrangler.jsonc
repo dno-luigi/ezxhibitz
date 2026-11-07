@@ -11,6 +11,7 @@
   // which fails to parse vite.config.js and aborts the deploy after the build.
   "assets": {
     "directory": "./dist",
+    "binding": "ASSETS",
     "not_found_handling": "single-page-application",
     // The API and shared packets are answered by the Worker; every other path is
     // a file in dist/ (or the SPA fallback).

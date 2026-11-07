@@ -31,10 +31,15 @@ export default {
       return serveFile(request, env, file[1]);
     }
 
+    // File URLs are not app routes: a broken share link is a 404, like an expired one.
+    if (url.pathname === "/f" || url.pathname.startsWith("/f/")) return fail(404, "not_found", "No such file.");
+
     const match = ACTION.exec(url.pathname);
     if (!match) {
       if (url.pathname === "/api" || url.pathname.startsWith("/api/")) return fail(404, "not_found", "No such endpoint.");
-      return env.ASSETS.fetch(request);
+      // Only reached if the Worker is asked to serve app paths too.
+      if (env.ASSETS) return env.ASSETS.fetch(request);
+      return fail(404, "not_found", "No such page.");
     }
 
     if (request.method !== "POST") return fail(405, "method_not_allowed", "Use POST.");
