@@ -23,5 +23,7 @@
       "migrations_dir": "migrations"
     }
   ],
-  "r2_buckets": [{ "binding": "FILES", "bucket_name": "ezxhibitz-files" }]
+  "r2_buckets": [{ "binding": "FILES", "bucket_name": "ezxhibitz-files" }],
+  // Local KV: `npm run api` keeps it in .wrangler/ like the local D1 and R2.
+  "kv_namespaces": [{ "binding": "KV", "id": "c3a74c5eba354b53b1240be985bd53c7" }]
 }

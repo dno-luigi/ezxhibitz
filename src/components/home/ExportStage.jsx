@@ -1,10 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, Copy, Download, Link2, Loader2 } from "lucide-react";
 import { upload, table, toast } from "@wron/kit";
 import Button from "../Button";
 import PreviewStrip from "./PreviewStrip";
+import PackRequest from "./PackRequest";
+import { quota } from "../../lib/quota";
 import { formatDate, removalDate } from "../../lib/packet";
 import { COPY } from "../../data/business";
+import { PAY_PLANS } from "../../data/plans";
+
+const PLAN = PAY_PLANS.find((p) => p.id === "per-packet");
 
 const fileNameFor = (b) => {
   const base = (b.ready[0]?.title || "packet").replace(/[^\w\- ]+/g, "").trim().slice(0, 60) || "packet";
@@ -14,14 +19,42 @@ const fileNameFor = (b) => {
 export default function ExportStage({ b }) {
   const [busy, setBusy] = useState(null);
   const [error, setError] = useState(null);
+  const [allowance, setAllowance] = useState(null);
+  const [buying, setBuying] = useState(false);
+  const [code, setCode] = useState("");
+  const [redeeming, setRedeeming] = useState(false);
+  const [codeNote, setCodeNote] = useState(null);
   const share = b.share;
   const expires = share ? removalDate(share.createdAt, 30) : null;
+  const blocked = allowance ? allowance.allowed === false : false;
+
+  // Building and previewing need no server; this only says whether an export can go.
+  useEffect(() => {
+    let live = true;
+    quota
+      .status(b)
+      .then((next) => live && setAllowance(next))
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+    // Once per visit to the export step: the export itself re-checks.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /** Count this export on the server. False means no packet is available. */
+  const takePacket = async () => {
+    const next = await quota.consume(b);
+    setAllowance(next);
+    return next.allowed !== false;
+  };
 
   const download = async () => {
     setError(null);
     setBusy("download");
     try {
       const blob = await b.build();
+      if (!(await takePacket())) return;
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -42,6 +75,7 @@ export default function ExportStage({ b }) {
     setBusy("share");
     try {
       const blob = await b.build();
+      if (!(await takePacket())) return;
       const file = new File([blob], fileNameFor(b), { type: "application/pdf" });
       const { url } = await upload(file);
       const createdAt = Date.now();
@@ -79,6 +113,21 @@ export default function ExportStage({ b }) {
     }
   };
 
+  const redeem = async () => {
+    setRedeeming(true);
+    setCodeNote(null);
+    try {
+      const next = await quota.redeem(code);
+      setAllowance(next);
+      setCode("");
+      toast.success(COPY.codeOk);
+    } catch (err) {
+      setCodeNote(err?.message || COPY.codeBad);
+    } finally {
+      setRedeeming(false);
+    }
+  };
+
   return (
     <div className="grid gap-8 lg:grid-cols-12">
       <div className="order-2 lg:order-1 lg:col-span-5">
@@ -92,22 +141,65 @@ export default function ExportStage({ b }) {
             {b.ready.length} {b.ready.length === 1 ? "file" : "files"} · {b.plan.total} {b.plan.total === 1 ? "page" : "pages"}
           </p>
 
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-            <Button size="lg" onClick={download} disabled={!!busy || !b.plan.total} className="flex-1">
-              {busy === "download" ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : <Download className="h-5 w-5" aria-hidden="true" />}
-              {busy === "download" ? "Building PDF" : COPY.download}
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={createLink}
-              disabled={!!busy || !b.plan.total}
-              className="flex-1 border-primary text-primary"
-            >
-              {busy === "share" ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : <Link2 className="h-5 w-5" aria-hidden="true" />}
-              {busy === "share" ? "Creating link" : COPY.share}
-            </Button>
-          </div>
+          {blocked ? (
+            <div className="mt-6 rounded-[16px] border border-line bg-surface p-4">
+              <p className="t-card text-ink">{COPY.payTitle}</p>
+              <p className="mt-2 text-muted">{COPY.payBody}</p>
+              <Button size="lg" onClick={() => setBuying(true)} className="mt-4 w-full sm:w-auto">
+                {PLAN?.action}
+              </Button>
+
+              <div className="mt-5 border-t border-line pt-4">
+                <label htmlFor="unlock-code" className="t-label text-ink">
+                  {COPY.payCode}
+                </label>
+                <div className="mt-2 flex gap-2">
+                  <input
+                    id="unlock-code"
+                    value={code}
+                    onChange={(e) => {
+                      setCode(e.target.value);
+                      setCodeNote(null);
+                    }}
+                    autoComplete="off"
+                    spellCheck="false"
+                    className="h-12 min-w-0 flex-1 rounded-[12px] border border-line bg-bg px-3 text-[15px] uppercase tracking-wide text-ink"
+                  />
+                  <Button variant="outline" onClick={redeem} disabled={!code.trim() || redeeming}>
+                    {redeeming ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : null}
+                    {COPY.codeApply}
+                  </Button>
+                </div>
+                {codeNote ? (
+                  <p role="alert" className="mt-2 text-[15px] text-accent">
+                    {codeNote}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                <Button size="lg" onClick={download} disabled={!!busy || !b.plan.total} className="flex-1">
+                  {busy === "download" ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : <Download className="h-5 w-5" aria-hidden="true" />}
+                  {busy === "download" ? "Building PDF" : COPY.download}
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={createLink}
+                  disabled={!!busy || !b.plan.total}
+                  className="flex-1 border-primary text-primary"
+                >
+                  {busy === "share" ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : <Link2 className="h-5 w-5" aria-hidden="true" />}
+                  {busy === "share" ? "Creating link" : COPY.share}
+                </Button>
+              </div>
+              {allowance && allowance.used === 0 && allowance.credits === 0 ? (
+                <p className="mt-3 t-meta text-muted">{COPY.freeNote}</p>
+              ) : null}
+            </>
+          )}
 
           {error ? (
             <p role="alert" className="mt-4 flex flex-wrap items-center gap-2 text-[15px] text-ink">
@@ -162,6 +254,10 @@ export default function ExportStage({ b }) {
           </p>
         </div>
       </div>
+
+      {PLAN ? (
+        <PackRequest key={PLAN.id} open={buying} onClose={() => setBuying(false)} plan={{ id: PLAN.id, name: PLAN.name, label: PLAN.label }} />
+      ) : null}
     </div>
   );
 }

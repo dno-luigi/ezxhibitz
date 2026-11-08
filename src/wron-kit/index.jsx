@@ -18,7 +18,7 @@ export { Dialog, Sheet, Accordion, AccordionItem, Tabs, Carousel, BeforeAfter, t
 export { BookingEmbed, MapEmbed, VideoEmbed } from "./embeds.jsx";
 export { Widget, Embed } from "./widgets.jsx";
 export {
-  submitForm, useForm, SpamTrap, table, useTable, useRow, auth, useUser, SignedIn, SignedOut, RequireSignIn,
+  submitForm, useForm, SpamTrap, table, useTable, useRow, auth, useUser, SignedIn, SignedOut, RequireSignIn, cloudCall,
   upload, checkout, useCart, money, useCheckoutResult, useOrder, ai, CloudError, appointments, useAvailability,
   owner, useOwner, OwnerOnly, useLanguage,
 } from "./cloud.js";

@@ -56,3 +56,32 @@ to the deploy command in the Workers Builds settings.
 To read the inbox:
 
     npx wrangler d1 execute ezxhibitz --remote --command "SELECT * FROM form_submissions ORDER BY created_at DESC"
+
+## The free packet
+
+`worker/usage.js` holds the allowance: `FREE_PACKETS`, currently **1**. Adding,
+arranging and previewing never touch the server — the editor stays open — and only
+a finished export asks for a packet.
+
+The count is kept server-side, so clearing the browser, opening a private window or
+changing networks does not hand out another free packet. A person is resolved from
+the browser's device id, a fingerprint of the headers a page cannot rewrite, the
+shape of the packet being exported, and the hashed address last — never the IP
+alone. KV holds the alias index (one fast read at the edge); R2 holds
+`usage/<id>.json` per person, with every export and every refusal recorded, so the
+evidence outlives any KV eviction.
+
+A re-export of the same packet within seven days is free, as the pricing page says.
+
+The ceiling is worth knowing: the PDF is built in the browser, so this stops the
+ordinary reset. Somebody using a second browser or machine is a different record.
+
+### Letting a buyer export after paying
+
+Issue a code, one per paid packet, from the dashboard (KV → the namespace in
+`wrangler.jsonc` → add key `code:EXHIBITZ-AB12`) or from the command line:
+
+    npx wrangler kv key put --binding KV --remote "code:EXHIBITZ-AB12" '{"packets":1}'
+
+Send it to the buyer; they enter it in the export step and the code is deleted as
+soon as it is used. `{"packets":20}` adds twenty.

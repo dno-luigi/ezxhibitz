@@ -36,5 +36,10 @@
       "migrations_dir": "migrations"
     }
   ],
-  "r2_buckets": [{ "binding": "FILES", "bucket_name": "ezxhibitz-files" }]
+  "r2_buckets": [{ "binding": "FILES", "bucket_name": "ezxhibitz-files" }],
+
+  // Which person has already used their free packet. The namespace already exists
+  // in the account, so its id is given here instead of being provisioned again.
+  // Nothing secret is in an id: it names a namespace, it does not open one.
+  "kv_namespaces": [{ "binding": "KV", "id": "c3a74c5eba354b53b1240be985bd53c7" }]
 }

@@ -8,6 +8,7 @@
 //   POST /api/site/:siteId/forms   { form, data }            -> form_submissions
 //   POST /api/site/:siteId/db      { op, table, values }     -> share_links
 //   POST /api/site/:siteId/upload  multipart "file"          -> stored in R2
+//   POST /api/site/:siteId/usage   { op, sig, pages }        -> free-packet allowance
 //   GET  /f/:id                                              -> the shared file
 //   POST /api/site/:siteId/hit | errors                      -> accepted, not stored
 //
@@ -16,6 +17,7 @@ import { handleDb } from "./db.js";
 import { handleUpload, serveFile } from "./files.js";
 import { handleForms } from "./forms.js";
 import { ensureSchema } from "./schema.js";
+import { handleUsage } from "./usage.js";
 import { fail, readBody, sameOrigin } from "./util.js";
 
 const ACTION = /^\/api\/site\/([A-Za-z0-9_-]{1,64})\/([a-z]+)\/?$/;
@@ -74,6 +76,8 @@ export default {
           return await handleForms(request, env, body);
         case "db":
           return await handleDb(request, env, body);
+        case "usage":
+          return await handleUsage(request, env, body);
         case "auth":
           return fail(501, "not_supported", "This site has no accounts. Pay per packet or by plan, no sign-in needed.");
         case "ai":

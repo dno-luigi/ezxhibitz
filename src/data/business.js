@@ -80,5 +80,11 @@ export const COPY = {
   errUnreadable: "This file could not be read. The rest of your packet is unchanged.",
   errPreview: "Preview is unavailable. Your work is kept. Retry.",
   errExport: "Export is unavailable. Your work is kept. Retry.",
+  payTitle: "Your free packet is used",
+  payBody: "You can keep adding, arranging and previewing this one. Buy a packet when you are ready to export it.",
+  payCode: "Already paid? Enter the code we sent you.",
+  codeApply: "Use code",
+  codeBad: "That code did not work. Check it and try again.",
+  codeOk: "Packet added to this browser.",
   deleted: "Deleted after 30 days.",
 };
