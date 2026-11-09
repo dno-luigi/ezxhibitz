@@ -87,6 +87,48 @@ Issue a code, one per paid packet, from the dashboard (KV → the namespace in
 Send it to the buyer; they enter it in the export step and the code is deleted as
 soon as it is used. `{"packets":20}` adds twenty.
 
+### Letting the payment issue the code itself
+
+Cash App has no webhook for money arriving on a personal account, so the *alert* is the
+trigger: the receipt email, or the phone's own notification, is handed to an automation
+which posts the payment to `POST /api/pay/received`. `worker/pay.js` answers with a real
+packet code — the same kind as above — for the automation to send on to the buyer.
+
+Set one secret first; nothing is issued without it:
+
+    npx wrangler secret put PAY_NOTIFY_KEY       # a long random string the automation sends back
+
+Then point any automation at it. Zapier (email parser → filter → webhook), n8n (IMAP or
+Gmail trigger → HTTP request), an Apps Script on the inbox, or a service like
+emailreceipts.io that forwards receipts and posts a webhook — all send the same thing:
+
+    curl -X POST https://ezxhibitz.ai-n.workers.dev/api/pay/received \
+      -H "x-pay-key: THE-KEY" -H "content-type: application/json" \
+      -d '{"amount":"7.99","note":"buyer@example.com","id":"cash-app-reference"}'
+
+The reply is `{"ok":true,"code":"PACKET-XXXXXXXXXXXX","packets":1,"email":"buyer@example.com"}`.
+Add a step that emails `code` to `email` and the buyer is served without anyone touching
+it. A `Bearer` token is accepted instead of `x-pay-key`, and `amount` may be `7.99` or
+`"$7.99"`. A payment under the packet price is refused, so a $1 test payment mints
+nothing.
+
+The details that matter:
+
+- **One payment, one code.** Send the Cash App reference as `id`. A retry returns the same
+  code with `"duplicate":true` instead of selling a second packet. Without an `id`, the
+  same payer paying the same amount on the same day counts as one payment.
+- **The buyer's address** comes from `email`, or from the email the buyer typed in the
+  Cash App note, which is why the purchase dialog asks them to put it there. With no
+  address the code is still issued, `needs_email` is `true`, and it is up to the
+  automation to reach the owner instead of the buyer.
+- **Codes expire in 90 days** and are single use, like every other code.
+- **Test it without money:** post a fake payment with a made-up `id`; a code comes back
+  and redeems in the export step. Delete that `code:` key afterwards if you do not want
+  it live.
+- Before trusting a real receipt, check what your notification actually contains — the
+  amount and the note are not guaranteed in every Cash App alert. If the note is missing,
+  the payment still mints a code and the request form is how you learn who to send it to.
+
 ## Owner access
 
 The owner uses the product without paying, and their exports are not counted. That is a

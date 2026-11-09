@@ -10,6 +10,7 @@
 //   POST /api/site/:siteId/upload  multipart "file"          -> stored in R2
 //   POST /api/site/:siteId/usage   { op, sig, pages }        -> free-packet allowance
 //   POST /api/owner/session        X-Owner-Code header       -> owner session cookie
+//   POST /api/pay/received         X-Pay-Key header          -> a packet code for a payment
 //   GET  /f/:id                                              -> the shared file
 //   POST /api/site/:siteId/hit | errors                      -> accepted, not stored
 //
@@ -21,6 +22,7 @@ import { ensureSchema } from "./schema.js";
 import { handleUsage } from "./usage.js";
 import { fail, readBody, sameOrigin } from "./util.js";
 import { handleOwner } from "./owner.js";
+import { handlePaid } from "./pay.js";
 
 const ACTION = /^\/api\/site\/([A-Za-z0-9_-]{1,64})\/([a-z]+)\/?$/;
 const FILE = /^\/f\/([A-Za-z0-9-]{8,64})\/?$/;
@@ -44,6 +46,10 @@ export default {
       if (!sameOrigin(request)) return fail(403, "not_allowed", "Requests must come from this site.");
       return handleOwner(request, env);
     }
+
+    // Payment notifications arrive from an automation, not from a page, so this is
+    // authenticated by its own key instead of the same-origin check above.
+    if (url.pathname === "/api/pay/received") return handlePaid(request, env);
 
     const match = ACTION.exec(url.pathname);
     if (!match) {

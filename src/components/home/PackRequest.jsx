@@ -41,8 +41,8 @@ export default function PackRequest({ open, onClose, plan }) {
             <Img src={CASH_APP_QR} alt="Cash App QR code for paying" ratio="1/1" className="w-32 shrink-0 rounded-[12px] bg-white" imgClassName="object-contain" />
             <p className="text-[15px] text-ink">
               {amount
-                ? `Scan with the Cash App camera and send ${amount}. Then send this request so we can match your payment to your email.`
-                : "Scan with the Cash App camera, then send this request so we can match your payment to your email."}
+                ? `Scan with the Cash App camera and send ${amount}, putting your email in the note. Then send this request so we can match the payment.`
+                : "Scan with the Cash App camera, putting your email in the note, then send this request so we can match the payment."}
             </p>
           </div>
           <input type="hidden" name="plan" value={plan?.label || ""} />
