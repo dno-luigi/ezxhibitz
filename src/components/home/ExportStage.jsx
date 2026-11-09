@@ -371,7 +371,7 @@ export default function ExportStage({ b }) {
       </div>
 
       {PLAN ? (
-        <PackRequest key={PLAN.id} open={buying} onClose={() => setBuying(false)} plan={{ id: PLAN.id, name: PLAN.name, label: PLAN.label }} />
+        <PackRequest key={PLAN.id} open={buying} onClose={() => setBuying(false)} plan={{ id: PLAN.id, name: PLAN.name, price: PLAN.price, label: PLAN.label }} />
       ) : null}
     </div>
   );
