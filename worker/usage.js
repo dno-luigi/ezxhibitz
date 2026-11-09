@@ -28,6 +28,7 @@
 // stop somebody using a second browser or a second machine. Without accounts,
 // nothing can.
 import { fail, ipHash, json, nowIso, sha256Hex } from "./util.js";
+import { roleFor } from "./owner.js";
 
 /** Change this one number to change the free allowance. */
 export const FREE_PACKETS = 1;
@@ -173,6 +174,8 @@ async function save(env, record, s, fp, ip, sig) {
 export async function handleUsage(request, env, body) {
   if (!env.FILES) return fail(503, "not_connected", "This site is not connected to its file storage yet.");
 
+  // Decided here, from the session cookie, before anything is counted.
+  const role = await roleFor(request, env);
   const op = String(body.op || "status");
   const s = readSignals(request);
   const ip = await ipHash(request);
@@ -182,7 +185,8 @@ export async function handleUsage(request, env, body) {
 
   if (op === "status") {
     const record = await findRecord(env, s, fp, sig);
-    return json(view(record, sig));
+    const state = view(record, sig);
+    return json(role === "owner" ? { ...state, role, allowed: true } : { ...state, role });
   }
 
   if (op === "redeem") {
@@ -224,6 +228,14 @@ export async function handleUsage(request, env, body) {
   const entry = { at: nowIso(), sig, pages, ip };
   let reason = "revision";
 
+  if (role === "owner") {
+    // Recorded, never counted: the owner's exports do not spend the allowance.
+    entry.owner = true;
+    record.exports = [entry, ...(record.exports || [])];
+    await save(env, record, s, fp, ip, sig);
+    return json({ ...view(record, sig), role, owner: true, allowed: true, reason: "owner" });
+  }
+
   if (isRevision(record, sig)) {
     entry.revision = true;
   } else if (Number(record.credits || 0) > 0) {
@@ -237,10 +249,10 @@ export async function handleUsage(request, env, body) {
     entry.denied = true;
     record.exports = [entry, ...(record.exports || [])];
     await save(env, record, s, fp, ip, sig);
-    return json({ ...view(record, sig), allowed: false, reason: "payment_required" });
+    return json({ ...view(record, sig), role, allowed: false, reason: "payment_required" });
   }
 
   record.exports = [entry, ...(record.exports || [])];
   await save(env, record, s, fp, ip, sig);
-  return json({ ...view(record, sig), allowed: true, reason });
+  return json({ ...view(record, sig), role, allowed: true, reason });
 }

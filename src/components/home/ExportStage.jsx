@@ -5,6 +5,7 @@ import Button from "../Button";
 import PreviewStrip from "./PreviewStrip";
 import PackRequest from "./PackRequest";
 import { quota } from "../../lib/quota";
+import { owner } from "../../lib/owner";
 import { formatDate, removalDate } from "../../lib/packet";
 import { COPY } from "../../data/business";
 import { PAY_PLANS } from "../../data/plans";
@@ -24,9 +25,15 @@ export default function ExportStage({ b }) {
   const [code, setCode] = useState("");
   const [redeeming, setRedeeming] = useState(false);
   const [codeNote, setCodeNote] = useState(null);
+  const [ownerOpen, setOwnerOpen] = useState(false);
+  const [ownerCode, setOwnerCode] = useState("");
+  const [ownerBusy, setOwnerBusy] = useState(false);
+  const [ownerNote, setOwnerNote] = useState(null);
   const share = b.share;
   const expires = share ? removalDate(share.createdAt, 30) : null;
   const blocked = allowance ? allowance.allowed === false : false;
+  // The server decides the role and names it in every reply; the page only shows it.
+  const isOwner = allowance?.role === "owner";
 
   // Building and previewing need no server; this only says whether an export can go.
   useEffect(() => {
@@ -126,6 +133,40 @@ export default function ExportStage({ b }) {
     } finally {
       setRedeeming(false);
     }
+  };
+
+  /** Re-read the role and the allowance after a sign-in or sign-out. */
+  const refreshAllowance = async () => {
+    const next = await quota.status(b).catch(() => null);
+    if (next) setAllowance(next);
+  };
+
+  const ownerSignIn = async () => {
+    setOwnerBusy(true);
+    setOwnerNote(null);
+    try {
+      await owner.signIn(ownerCode.trim());
+      setOwnerCode("");
+      setOwnerOpen(false);
+      await refreshAllowance();
+      toast.success(COPY.ownerOk);
+    } catch (err) {
+      setOwnerNote(err?.message || COPY.ownerBad);
+    } finally {
+      setOwnerBusy(false);
+    }
+  };
+
+  const ownerSignOut = async () => {
+    setOwnerBusy(true);
+    setOwnerNote(null);
+    try {
+      await owner.signOut();
+    } catch {
+      /* already signed out, or this visit never signed in */
+    }
+    await refreshAllowance();
+    setOwnerBusy(false);
   };
 
   return (
@@ -248,6 +289,65 @@ export default function ExportStage({ b }) {
               )}
             </div>
           ) : null}
+
+          <div className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-line pt-4">
+            {isOwner ? (
+              <>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-primary px-3 py-1 t-label text-primary">
+                  <Check className="h-4 w-4" aria-hidden="true" /> {COPY.ownerBadge}
+                </span>
+                <span className="t-meta text-muted">{COPY.ownerNote}</span>
+                <button
+                  type="button"
+                  onClick={ownerSignOut}
+                  disabled={ownerBusy}
+                  className="ml-auto min-h-11 t-label text-ink underline underline-offset-2 hover:text-accent"
+                >
+                  {COPY.ownerSignOut}
+                </button>
+              </>
+            ) : ownerOpen ? (
+              <div className="w-full">
+                <label htmlFor="owner-code" className="t-label text-ink">
+                  {COPY.ownerCode}
+                </label>
+                <div className="mt-2 flex gap-2">
+                  <input
+                    id="owner-code"
+                    type="password"
+                    value={ownerCode}
+                    onChange={(e) => {
+                      setOwnerCode(e.target.value);
+                      setOwnerNote(null);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && ownerCode.trim() && !ownerBusy) ownerSignIn();
+                    }}
+                    autoComplete="off"
+                    spellCheck="false"
+                    className="h-12 min-w-0 flex-1 rounded-[12px] border border-line bg-bg px-3 text-[15px] tracking-wide text-ink"
+                  />
+                  <Button variant="outline" onClick={ownerSignIn} disabled={!ownerCode.trim() || ownerBusy}>
+                    {ownerBusy ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : null}
+                    {COPY.ownerGo}
+                  </Button>
+                </div>
+                {ownerNote ? (
+                  <p role="alert" className="mt-2 text-[15px] text-accent">
+                    {ownerNote}
+                  </p>
+                ) : null}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setOwnerOpen(true)}
+                className="min-h-11 t-meta text-muted underline underline-offset-2 hover:text-primary"
+              >
+                {COPY.ownerSignIn}
+              </button>
+            )}
+          </div>
 
           <p className="mt-6 t-meta text-muted">
             Check the packet against your court's rules before filing. This tool does not provide legal advice or promise court acceptance.

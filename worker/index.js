@@ -9,6 +9,7 @@
 //   POST /api/site/:siteId/db      { op, table, values }     -> share_links
 //   POST /api/site/:siteId/upload  multipart "file"          -> stored in R2
 //   POST /api/site/:siteId/usage   { op, sig, pages }        -> free-packet allowance
+//   POST /api/owner/session        X-Owner-Code header       -> owner session cookie
 //   GET  /f/:id                                              -> the shared file
 //   POST /api/site/:siteId/hit | errors                      -> accepted, not stored
 //
@@ -19,6 +20,7 @@ import { handleForms } from "./forms.js";
 import { ensureSchema } from "./schema.js";
 import { handleUsage } from "./usage.js";
 import { fail, readBody, sameOrigin } from "./util.js";
+import { handleOwner } from "./owner.js";
 
 const ACTION = /^\/api\/site\/([A-Za-z0-9_-]{1,64})\/([a-z]+)\/?$/;
 const FILE = /^\/f\/([A-Za-z0-9-]{8,64})\/?$/;
@@ -35,6 +37,13 @@ export default {
 
     // File URLs are not app routes: a broken share link is a 404, like an expired one.
     if (url.pathname === "/f" || url.pathname.startsWith("/f/")) return fail(404, "not_found", "No such file.");
+
+    // The owner entitlement is its own endpoint: the code is exchanged here for a
+    // signed session, and the role is decided by the server, never by the page.
+    if (url.pathname === "/api/owner/session") {
+      if (!sameOrigin(request)) return fail(403, "not_allowed", "Requests must come from this site.");
+      return handleOwner(request, env);
+    }
 
     const match = ACTION.exec(url.pathname);
     if (!match) {

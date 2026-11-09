@@ -86,5 +86,13 @@ export const COPY = {
   codeApply: "Use code",
   codeBad: "That code did not work. Check it and try again.",
   codeOk: "Packet added to this browser.",
+  ownerSignIn: "Owner sign in",
+  ownerCode: "Owner access code",
+  ownerGo: "Sign in",
+  ownerOk: "Signed in as owner.",
+  ownerBadge: "Owner",
+  ownerNote: "Unlimited exports. Nothing is counted against the free packet.",
+  ownerSignOut: "Sign out",
+  ownerBad: "That access code did not work.",
   deleted: "Deleted after 30 days.",
 };

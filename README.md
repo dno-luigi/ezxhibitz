@@ -85,3 +85,30 @@ Issue a code, one per paid packet, from the dashboard (KV → the namespace in
 
 Send it to the buyer; they enter it in the export step and the code is deleted as
 soon as it is used. `{"packets":20}` adds twenty.
+
+## Owner access
+
+The owner uses the product without paying, and their exports are not counted. That is a
+`role`, not a plan: `role` is `owner` or `customer`, decided only by the Worker, and it
+sits beside `plan` rather than replacing it.
+
+Two secrets must be set before anyone can sign in:
+
+    npx wrangler secret put OWNER_ACCESS_CODE     # the code the owner types
+    npx wrangler secret put OWNER_SESSION_KEY     # a long random string; signs the cookie
+
+`OWNER_ACCESS_CODE` is the credential: generate it once, keep it out of the repository,
+and change it to revoke access. `OWNER_SESSION_KEY` signs the session cookie, so rotating
+it signs every owner out. Neither value belongs in `wrangler.jsonc`, in a commit, or in a
+message. For local `npm run api`, put both names in `.dev.vars`, which is ignored.
+
+The owner signs in on the Export step: **Owner sign in**, then the code. The code is sent
+once in `X-Owner-Code` and exchanged for a 30-day `HttpOnly; Secure; SameSite=Lax`
+cookie; it is never stored in the page, and no visitor is recognised by IP or user agent.
+The badge appears only when the server reports `role: "owner"`, and signing out brings
+the free-packet allowance back exactly as it was.
+
+With either secret missing the route fails closed with `401`, so a half-configured
+deployment is not an open one.
+
+    node --test test/owner.test.mjs     # the owner checks, no Cloudflare needed
