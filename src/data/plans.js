@@ -4,10 +4,10 @@
 export const PAY_PLANS = [
   {
     id: "free-1",
-    name: "Your first packet",
+    name: "Your first 3 packets",
     price: "Free",
     unit: "",
-    note: "Build one full packet at no cost. Separators, page numbers and share link included.",
+    note: "Build three full packets at no cost. Separators, page numbers and share link included.",
     action: "Start free",
     kind: "start", // opens the builder's file picker
   },

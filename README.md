@@ -59,7 +59,7 @@ To read the inbox:
 
 ## The free packet
 
-`worker/usage.js` holds the allowance: `FREE_PACKETS`, currently **1**. Adding,
+`worker/usage.js` holds the allowance: `FREE_PACKETS`, currently **3**. Adding,
 arranging and previewing never touch the server — the editor stays open — and only
 a finished export asks for a packet.
 

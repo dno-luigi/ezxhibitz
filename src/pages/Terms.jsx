@@ -17,10 +17,10 @@ export default function Terms() {
       <section className="mx-auto max-w-[1280px] px-5 sm:px-8 lg:px-12">
         <div className="mt-12 rounded-2xl border border-dashed border-line bg-surface p-6 md:min-h-[320px] md:px-12 md:py-12">
           <h2 className="text-4xl font-[650] leading-none tracking-[-0.03em] text-ink md:text-5xl">Pricing</h2>
-          <p className="mt-3 text-[19px] text-muted md:text-2xl">Your first packet is free. Each packet after that costs $7.99. Access plans are listed on the home page.</p>
+          <p className="mt-3 text-[19px] text-muted md:text-2xl">Your first three packets are free. Each packet after that costs $7.99. Access plans are listed on the home page.</p>
           <div className="mt-8 grid grid-cols-1 items-baseline gap-6 sm:grid-cols-2">
             <div>
-              <p className="t-card text-muted">First packet</p>
+              <p className="t-card text-muted">First 3 packets</p>
               <p className="mt-1 text-6xl font-bold leading-none tracking-[-0.03em] text-primary tabular-nums md:text-8xl">$0</p>
             </div>
             <div className="border-t border-line pt-6 sm:border-l sm:border-t-0 sm:pl-6 sm:pt-0">

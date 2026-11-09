@@ -18,7 +18,7 @@ const jsonLd = {
   email: BUSINESS.email,
   telephone: "+1-858-876-5295",
   offers: [
-    { "@type": "Offer", name: "First packet", price: "0", priceCurrency: "USD" },
+    { "@type": "Offer", name: "First 3 packets", price: "0", priceCurrency: "USD" },
     { "@type": "Offer", name: "Per packet", price: "7.99", priceCurrency: "USD" },
     { "@type": "Offer", name: "Personal access, per year", price: "99", priceCurrency: "USD" },
     { "@type": "Offer", name: "Professional access, per month", price: "39", priceCurrency: "USD" },
@@ -31,7 +31,7 @@ export default function Home() {
   return (
     <Page
       title="Build exhibit packets in one PDF"
-      description="Add PDFs, images and Word files, arrange and label your exhibits, preview, then export one clean PDF packet. Your first packet is free."
+      description="Add PDFs, images and Word files, arrange and label your exhibits, preview, then export one clean PDF packet. Your first three packets are free."
       jsonLd={jsonLd}
     >
       <Workspace />

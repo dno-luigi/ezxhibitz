@@ -134,15 +134,22 @@ test("a lockout names the wait and carries retry-after", async () => {
   assert.match((await limited.json()).message, /wait 60 seconds/i);
 });
 
-test("a customer gets one free export, then is refused", async () => {
+test("a customer gets three free exports, then is refused", async () => {
   const env = newEnv();
-  const first = await (await handleUsage(usageReq(), env, { op: "consume", sig: "abc123", pages: 2 })).json();
-  const second = await (await handleUsage(usageReq(), env, { op: "consume", sig: "def456", pages: 2 })).json();
+  const attempts = [];
+  for (const sig of ["abc123", "def456", "0aa333", "0bb444"]) {
+    attempts.push(await (await handleUsage(usageReq(), env, { op: "consume", sig, pages: 2 })).json());
+  }
+  const [first, second, third, fourth] = attempts;
   assert.equal(first.allowed, true);
   assert.equal(first.reason, "free");
   assert.equal(first.role, "customer");
-  assert.equal(second.allowed, false);
-  assert.equal(second.reason, "payment_required");
+  assert.equal(third.allowed, true);
+  assert.equal(third.reason, "free");
+  assert.equal(fourth.allowed, false);
+  assert.equal(fourth.reason, "payment_required");
+  assert.equal(fourth.used, 3);
+  assert.equal(second.allowed, true);
 });
 
 test("an owner export is recorded but never counted", async () => {

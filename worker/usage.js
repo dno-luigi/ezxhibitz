@@ -31,7 +31,7 @@ import { fail, ipHash, json, nowIso, sha256Hex } from "./util.js";
 import { roleFor } from "./owner.js";
 
 /** Change this one number to change the free allowance. */
-export const FREE_PACKETS = 1;
+export const FREE_PACKETS = 3;
 
 /** A re-export of the same packet inside this window is free, as the pricing page promises. */
 const REVISION_DAYS = 7;
