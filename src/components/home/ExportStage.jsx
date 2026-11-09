@@ -17,6 +17,19 @@ const fileNameFor = (b) => {
   return `${base} packet.pdf`;
 };
 
+/**
+ * What the export step says about the allowance. Null means say nothing: an owner
+ * has no count, and once nothing is left the paywall explains it instead.
+ */
+function leftNote(a) {
+  if (!a || a.remaining <= 0) return null;
+  const n = a.remaining;
+  if (a.credits === 0 && a.free > 0 && a.used < a.free) {
+    return `${n} of ${a.free} free ${a.free === 1 ? "export" : "exports"} left`;
+  }
+  return `${n} ${n === 1 ? "export" : "exports"} left`;
+}
+
 export default function ExportStage({ b }) {
   const [busy, setBusy] = useState(null);
   const [error, setError] = useState(null);
@@ -236,8 +249,10 @@ export default function ExportStage({ b }) {
                   {busy === "share" ? "Creating link" : COPY.share}
                 </Button>
               </div>
-              {allowance && allowance.used === 0 && allowance.credits === 0 ? (
-                <p className="mt-3 t-meta text-muted">{COPY.freeNote}</p>
+              {!isOwner && leftNote(allowance) ? (
+                <p className="mt-3 t-meta text-muted" aria-live="polite">
+                  {leftNote(allowance)}
+                </p>
               ) : null}
             </>
           )}

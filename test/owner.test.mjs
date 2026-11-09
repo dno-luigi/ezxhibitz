@@ -28,6 +28,9 @@ function memR2() {
   return {
     get: async (k) => (m.has(k) ? { json: async () => JSON.parse(m.get(k)) } : null),
     put: async (k, v) => void m.set(k, String(v)),
+    // Only for seeding a record that predates the larger trial.
+    keys: () => [...m.keys()],
+    raw: (k) => m.get(k),
   };
 }
 
@@ -150,6 +153,23 @@ test("a customer gets three free exports, then is refused", async () => {
   assert.equal(fourth.reason, "payment_required");
   assert.equal(fourth.used, 3);
   assert.equal(second.allowed, true);
+});
+
+test("a record from before the larger trial keeps one packet", async () => {
+  const env = newEnv();
+  const first = await (await handleUsage(usageReq(), env, { op: "consume", sig: "aaa111", pages: 2 })).json();
+  assert.equal(first.allowed, true);
+  // The same person, whose record was opened before the trial grew.
+  const key = env.FILES.keys().find((k) => k.startsWith("usage/"));
+  const record = JSON.parse(env.FILES.raw(key));
+  record.first = "2026-01-01T00:00:00.000Z";
+  await env.FILES.put(key, JSON.stringify(record));
+
+  const second = await (await handleUsage(usageReq(), env, { op: "consume", sig: "bbb222", pages: 2 })).json();
+  assert.equal(second.allowed, false);
+  assert.equal(second.reason, "payment_required");
+  assert.equal(second.free, 1);
+  assert.equal(second.remaining, 0);
 });
 
 test("an owner export is recorded but never counted", async () => {

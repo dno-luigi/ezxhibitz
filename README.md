@@ -59,7 +59,8 @@ To read the inbox:
 
 ## The free packet
 
-`worker/usage.js` holds the allowance: `FREE_PACKETS`, currently **3**. Adding,
+`worker/usage.js` holds the allowance: `FREE_PACKETS`, currently **3**. Anyone whose
+record predates `TRIAL_GREW_AT` keeps the single packet they were promised. Adding,
 arranging and previewing never touch the server — the editor stays open — and only
 a finished export asks for a packet.
 

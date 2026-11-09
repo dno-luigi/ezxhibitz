@@ -33,6 +33,12 @@ import { roleFor } from "./owner.js";
 /** Change this one number to change the free allowance. */
 export const FREE_PACKETS = 3;
 
+/** What someone whose record predates the larger trial keeps: the trial they started on. */
+const LEGACY_FREE_PACKETS = 1;
+
+/** When the trial grew from one packet to three. Earlier records are grandfathered. */
+export const TRIAL_GREW_AT = "2026-11-09T17:30:00.000Z";
+
 /** A re-export of the same packet inside this window is free, as the pricing page promises. */
 const REVISION_DAYS = 7;
 
@@ -136,13 +142,24 @@ function isRevision(record, sig) {
   return (record.exports || []).some((e) => e.sig === sig && !e.denied && Date.parse(e.at) > since);
 }
 
+/**
+ * The trial this person is on, not today's: someone first seen before the trial grew
+ * keeps the one packet they were promised, and someone arriving after it gets three.
+ * No record at all is a first visit, so it gets the current allowance.
+ */
+function freeAllowance(record) {
+  const first = Date.parse(String(record?.first || ""));
+  return Number.isFinite(first) && first < Date.parse(TRIAL_GREW_AT) ? LEGACY_FREE_PACKETS : FREE_PACKETS;
+}
+
 function view(record, sig) {
   const used = Number(record?.used || 0);
   const credits = Number(record?.credits || 0);
-  const remaining = Math.max(0, FREE_PACKETS - used) + credits;
+  const free = freeAllowance(record);
+  const remaining = Math.max(0, free - used) + credits;
   return {
     allowed: remaining > 0 || (record ? isRevision(record, sig) : false),
-    free: FREE_PACKETS,
+    free,
     used,
     credits,
     remaining,
@@ -241,7 +258,7 @@ export async function handleUsage(request, env, body) {
   } else if (Number(record.credits || 0) > 0) {
     record.credits = Number(record.credits) - 1;
     reason = "credit";
-  } else if (Number(record.used || 0) < FREE_PACKETS) {
+  } else if (Number(record.used || 0) < freeAllowance(record)) {
     record.used = Number(record.used || 0) + 1;
     reason = "free";
   } else {
