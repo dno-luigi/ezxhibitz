@@ -117,6 +117,23 @@ test("with no secrets configured the route fails closed", async () => {
   assert.equal(res.status, 401);
 });
 
+test("a stored code with a stray newline still signs in", async () => {
+  // `echo code | wrangler secret put` keeps the newline; a typed code never has one.
+  const env = { ...newEnv(), OWNER_ACCESS_CODE: `${CODE}\n` };
+  const res = await handleOwner(ownerReq({ "x-owner-code": CODE }), env);
+  assert.equal(res.status, 200);
+  assert.equal((await res.json()).role, "owner");
+});
+
+test("a lockout names the wait and carries retry-after", async () => {
+  const env = newEnv();
+  for (let i = 0; i < 5; i += 1) await handleOwner(ownerReq({ "x-owner-code": "wrong" }), env);
+  const limited = await handleOwner(ownerReq({ "x-owner-code": "wrong" }), env);
+  assert.equal(limited.status, 429);
+  assert.equal(limited.headers.get("retry-after"), "60");
+  assert.match((await limited.json()).message, /wait 60 seconds/i);
+});
+
 test("a customer gets one free export, then is refused", async () => {
   const env = newEnv();
   const first = await (await handleUsage(usageReq(), env, { op: "consume", sig: "abc123", pages: 2 })).json();
@@ -187,6 +204,27 @@ test("the page shows the wrong-code wording for a 401", async () => {
     await assert.rejects(() => owner.signIn("anything"), { message: "That code is not valid." });
   } finally {
     restore();
+  }
+});
+
+test("a rate limit with an unreadable body still reads as a rate limit", async () => {
+  const real = globalThis.fetch;
+  globalThis.fetch = async () =>
+    new Response("<html>429</html>", { status: 429, headers: { "content-type": "text/html" } });
+  try {
+    await assert.rejects(() => owner.signIn("anything"), /too many attempts/i);
+  } finally {
+    globalThis.fetch = real;
+  }
+});
+
+test("a wrong code with no body is still a wrong code", async () => {
+  const real = globalThis.fetch;
+  globalThis.fetch = async () => new Response("", { status: 401 });
+  try {
+    await assert.rejects(() => owner.signIn("anything"), { message: "That code is not valid." });
+  } finally {
+    globalThis.fetch = real;
   }
 });
 

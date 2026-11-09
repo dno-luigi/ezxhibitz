@@ -93,9 +93,14 @@ export async function verifyClaim(env, token) {
  *
  * Both sides are hashed first, so the comparison is over equal-length hex and the
  * length of the real code cannot be narrowed from response times.
+ *
+ * Both sides are trimmed first. A secret written with `echo code | wrangler secret
+ * put` keeps the newline, and a value a human types never does, so an untrimmed
+ * stored code is a code nobody can ever sign in with.
  */
 async function codeMatches(env, provided) {
-  const expected = String(env?.OWNER_ACCESS_CODE || "");
+  const expected = String(env?.OWNER_ACCESS_CODE || "").trim();
+  provided = String(provided || "").trim();
   if (!expected || !provided) return false;
   const a = await sha256Hex(`owner-code:${expected}`);
   const b = await sha256Hex(`owner-code:${provided}`);
@@ -150,7 +155,13 @@ export async function handleOwner(request, env) {
   const bucket = `owner:try:${ip}`;
   const tries = env.KV ? Number(await env.KV.get(bucket)) || 0 : 0;
   if (env.KV && tries >= ATTEMPT_LIMIT) {
-    return fail(429, "too_many_attempts", "Too many attempts. Try again in a minute.");
+    // A lockout is not a wrong code, so it says so and names the wait: the caller
+    // shows this message verbatim instead of "that code is not valid".
+    return json(
+      { error: "too_many_attempts", message: `Too many attempts. Wait ${ATTEMPT_WINDOW} seconds, then try again.` },
+      429,
+      { "retry-after": String(ATTEMPT_WINDOW) },
+    );
   }
 
   if (!(await codeMatches(env, provided))) {

@@ -5,6 +5,16 @@
 // it only carries the request and reports what the server answered.
 const HEADER = "X-Owner-Code";
 
+// What to say when the reply carried no message of its own — an edge error or a
+// rate limiter answering with HTML rather than JSON. A lockout must not be
+// reported as a wrong code, or the owner keeps retyping a correct one.
+const BY_STATUS = {
+  401: "That code is not valid.",
+  403: "Requests must come from this site.",
+  405: "That request is not supported.",
+  429: "Too many attempts. Wait a minute, then try again.",
+};
+
 async function call(method, init = {}) {
   let res;
   try {
@@ -13,7 +23,12 @@ async function call(method, init = {}) {
     throw new Error("Couldn't reach the server. Check your connection and try again.");
   }
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.message || "That code is not valid.");
+  if (!res.ok) {
+    const fallback =
+      BY_STATUS[res.status] ||
+      (res.status >= 500 ? "The server had a problem. Try again in a moment." : "That code is not valid.");
+    throw new Error(data.message || fallback);
+  }
   return data;
 }
 
